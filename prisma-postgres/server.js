@@ -86,7 +86,7 @@ app.get('/logout', (req, res) => {
 });
 
 // Dashboard Data (Fetch User Info)
-app.get('/dashboard-data', async (req, res) => {
+app.get('/user-data', async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }

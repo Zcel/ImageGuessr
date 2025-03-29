@@ -45,4 +45,28 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    // Fetch user data when on the dashboard
+    async function fetchUserData() {
+        try {
+            const res = await fetch("/user-data", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (res.ok) {
+                const userData = await res.json();
+                document.getElementById("username").textContent = userData.username;
+                document.getElementById("xp").textContent = userData.xp;
+            } else {
+                console.error("Failed to fetch user data");
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    }
+
+    // Only call fetchUserData if the elements exist
+    if (document.getElementById("username")) {
+        fetchUserData();
+    }
 });
