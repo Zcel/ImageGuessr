@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Interactive Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+</head>
+<body>
+    <h1>Create a Game</h1>
+
+    <form id="game-form">
+        <label>Upload Image:</label>
+        <input type="file" id="image" accept="image/*" required><br>
+
+        <label>Pick Location:</label>
+        <div id="map" style="height: 300px;"></div>
+        <input type="hidden" id="latitude">
+        <input type="hidden" id="longitude">
+
+        <label>Hints:</label>
+        <input type="text" id="hint1" placeholder="Hint 1 (Hard)">
+        <input type="text" id="hint2" placeholder="Hint 2 (Medium)">
+        <input type="text" id="hint3" placeholder="Hint 3 (Easy)">
+
+        <button type="submit">Create Game</button>
+    </form>
+
+    <p id="game-link"></p>
+
+    <script src="script.js"></script>
+</body>
+</html>
