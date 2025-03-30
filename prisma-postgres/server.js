@@ -8,6 +8,17 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = 3000;
 
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
+
+const storage = multer.diskStorage({
+    destination: "public/uploads/",
+    filename: (req, file, cb) => {
+        cb(null, uuidv4() + path.extname(file.originalname)); // Unique image filename
+    }
+});
+const upload = multer({ storage });
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -79,11 +90,15 @@ app.post('/login', async (req, res) => {
 });
 
 // Logout Route
-app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login');
+app.post("/logout", (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ message: "Logout failed" });
+        }
+        res.json({ message: "Logged out successfully" });
     });
 });
+
 
 // Dashboard Data (Fetch User Info)
 app.get('/user-data', async (req, res) => {
@@ -96,9 +111,55 @@ app.get('/user-data', async (req, res) => {
         include: { games: true }
     });
 
+    // ✅ Parse hints from JSON before sending response
+    user.games = user.games.map(game => ({
+        ...game,
+        hints: JSON.parse(game.hints) // Convert string back to array
+    }));
+
     res.json({ username: user.username, xp: user.xp, games: user.games });
 });
 
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
+});
+//Handle game creation
+app.post("/create-game", upload.single("image"), async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const { latitude, longitude, hint1, hint2, hint3 } = req.body;
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const gameCode = uuidv4().slice(0, 6); // Generate a 6-character code
+
+    const newGame = await prisma.game.create({
+        data: {
+            creator: {
+                connect: { id: req.session.userId } // ✅ Fix: Connects the existing user
+            },
+            imageUrl,
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+            gameCode,
+            hints: JSON.stringify([hint1, hint2, hint3])
+        }
+    });
+
+    res.json({ message: "Game created!", gameCode: newGame.gameCode });
+});
+
+//Handle game joining
+app.get("/join-game/:gameCode", async (req, res) => {
+    const { gameCode } = req.params;
+    const game = await prisma.game.findUnique({ where: { gameCode } });
+
+    if (!game) {
+        return res.status(404).json({ message: "Game not found" });
+    }
+
+    if (game.userId === req.session.userId) {
+        return res.status(403).json({ message: "You cannot join your own game" });
+    }
+
+    res.json({ message: "Joining game...", redirect: `/play-game.html?gameCode=${gameCode}` });
 });

@@ -10,8 +10,13 @@
     <h1>Welcome, <span id="username"></span>!</h1>
     <p>XP: <span id="xp"></span></p>
 
+    <h2>Join a Game</h2>
+    <input type="text" id="gameCodeInput" placeholder="Enter Game Code">
+    <button onclick="joinGame()">Join</button>
+    <p id="joinMessage"></p>
+
     <button onclick="window.location.href='create-game.html'">Create a Game</button>
-    <button onclick="logout()">Logout</button>
+    <button id="logout-btn">Logout</button>
 
     <script src="script.js"></script>
 </body>

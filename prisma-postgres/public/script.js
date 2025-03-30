@@ -45,6 +45,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    //handle logout form
+    async function logout() {
+        try {
+            const res = await fetch("/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (res.ok) {
+                window.location.href = "/login.html"; // Redirect to login page
+            } else {
+                console.error("Logout failed");
+            }
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
+    }
+
+    // Attach logout function to the button
+    const logoutButton = document.getElementById("logout-btn");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", logout);
+    }
+    
     // Fetch user data when on the dashboard
     async function fetchUserData() {
         try {
@@ -69,4 +93,71 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("username")) {
         fetchUserData();
     }
+    // Initialize Leaflet Map
+    if (document.getElementById("map")) {
+        const map = L.map("map").setView([51.505, -0.09], 13); // Default to London
+        
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        let marker;
+
+        map.on("click", function (e) {
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+
+            document.getElementById("latitude").value = e.latlng.lat;
+            document.getElementById("longitude").value = e.latlng.lng;
+        });
+    }
+    //create game code
+    const gameForm = document.getElementById("game-form");
+    if (gameForm) {
+        gameForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const imageFile = document.getElementById("image").files[0];
+            const latitude = document.getElementById("latitude").value;
+            const longitude = document.getElementById("longitude").value;
+            const hint1 = document.getElementById("hint1").value;
+            const hint2 = document.getElementById("hint2").value;
+            const hint3 = document.getElementById("hint3").value;
+
+            if (!imageFile || !latitude || !longitude) {
+                alert("Please upload an image and select a location.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", imageFile);
+            formData.append("latitude", latitude);
+            formData.append("longitude", longitude);
+            formData.append("hint1", hint1);
+            formData.append("hint2", hint2);
+            formData.append("hint3", hint3);
+
+            const res = await fetch("/create-game", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+            document.getElementById("game-link").textContent = `Game Code: ${data.gameCode}`;
+        });
+    }
+    //Join game
+    async function joinGame() {
+        const gameCode = document.getElementById("gameCodeInput").value;
+        if (!gameCode) return;
+    
+        const res = await fetch(`/join-game/${gameCode}`);
+        const data = await res.json();
+    
+        if (res.ok) {
+            window.location.href = `/play-game.html?gameCode=${gameCode}`;
+        } else {
+            document.getElementById("joinMessage").textContent = data.message;
+        }
+    }    
 });

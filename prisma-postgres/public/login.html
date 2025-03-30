@@ -6,16 +6,24 @@
     <title>Login</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <h1>Login</h1>
+<body class="body-login">
+    <div class="wrapper">
     <form id="login-form">
-        <input type="email" id="email" placeholder="Email" required><br>
-        <input type="password" id="password" placeholder="Password" required><br>
-        <button type="submit">Login</button>
+        <div class="input-field">
+            <input type="email" id="email" required>
+            <label>Enter your email</label>
+          </div>
+          <div class="input-field">
+            <input type="password" id="password" required>
+            <label>Enter your password</label>
+          </div>
+        <button type="submit" class="login-btn">Login</button>
     </form>
+    <div class="register">
     <p>Don't have an account? <a href="register.html">Register</a></p>
+</div>
     <p id="message"></p>
-
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

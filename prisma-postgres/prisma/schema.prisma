@@ -22,10 +22,11 @@ model Game {
   creatorId   Int
   creator     User     @relation(fields: [creatorId], references: [id])
   imageUrl    String
-  locationLat Float
-  locationLng Float
-  hints       String
+  latitude  Float
+  longitude Float
+  hints       Json
   guesses     Guess[]
+  gameCode  String
 }
 
 model Guess {
