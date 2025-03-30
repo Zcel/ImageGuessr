@@ -20,6 +20,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -129,37 +130,78 @@ app.post("/create-game", upload.single("image"), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
 
     const { latitude, longitude, hint1, hint2, hint3 } = req.body;
-    const imageUrl = `/uploads/${req.file.filename}`;
-    const gameCode = uuidv4().slice(0, 6); // Generate a 6-character code
+    const gameCode = uuidv4().slice(0, 6);
 
-    const newGame = await prisma.game.create({
-        data: {
-            creator: {
-                connect: { id: req.session.userId } // ✅ Fix: Connects the existing user
-            },
-            imageUrl,
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
-            gameCode,
-            hints: JSON.stringify([hint1, hint2, hint3])
-        }
-    });
+    try {
+        const imageUrl = `/uploads/${req.file.filename}`;
+        const newGame = await prisma.game.create({
+            data: {
+                creator: { connect: { id: req.session.userId } },
+                imageUrl,
+                latitude: parseFloat(latitude),
+                longitude: parseFloat(longitude),
+                gameCode,
+                hints: JSON.stringify([hint1, hint2, hint3])
+            }
+        });
 
-    res.json({ message: "Game created!", gameCode: newGame.gameCode });
+        return res.json({ message: "Game created!", gameCode: newGame.gameCode });
+    } catch (error) {
+        console.error("Error creating game:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
 });
+
 
 //Handle game joining
 app.get("/join-game/:gameCode", async (req, res) => {
     const { gameCode } = req.params;
-    const game = await prisma.game.findUnique({ where: { gameCode } });
 
-    if (!game) {
-        return res.status(404).json({ message: "Game not found" });
+    try {
+        const game = await prisma.game.findFirst({ where: { gameCode } });
+
+        if (!game) {
+            return res.status(404).json({ message: "Game not found" });
+        }
+
+        if (game.userId === req.session.userId) {
+            return res.status(403).json({ message: "You cannot join your own game" });
+        }
+
+        res.json({
+            message: "Joining game...",
+            redirect: `/play-game.html?gameCode=${gameCode}`,
+            imageUrl: game.imageUrl,
+            latitude: game.latitude,
+            longitude: game.longitude,
+            hints: JSON.parse(game.hints)
+        });
+    } catch (error) {
+        console.error("Error joining game:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
+});
+// Fetch game data by game code
+app.get('/game-data/:gameCode', async (req, res) => {
+    const { gameCode } = req.params;
 
-    if (game.userId === req.session.userId) {
-        return res.status(403).json({ message: "You cannot join your own game" });
+    try {
+        const game = await prisma.game.findFirst({
+            where: { gameCode }
+        });
+
+        if (!game) {
+            return res.status(404).json({ message: "Game not found" });
+        }
+
+        res.json({
+            imageUrl: game.imageUrl,
+            latitude: game.latitude,
+            longitude: game.longitude,
+            hints: game.hints
+        });
+    } catch (error) {
+        console.error("Error fetching game data:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-
-    res.json({ message: "Joining game...", redirect: `/play-game.html?gameCode=${gameCode}` });
 });

@@ -1,3 +1,27 @@
+async function joinGame() {
+    const gameCode = document.getElementById("gameCodeInput").value; // Get the input value
+
+    if (!gameCode) {
+        document.getElementById("joinMessage").textContent = "Please enter a game code.";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/join-game/${gameCode}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            // If the game is found and the user can join, redirect to the play page
+            window.location.href = data.redirect;
+        } else {
+            // If there is an error (e.g., game not found or cannot join own game)
+            document.getElementById("joinMessage").textContent = data.message;
+        }
+    } catch (error) {
+        console.error("Error joining game:", error);
+        document.getElementById("joinMessage").textContent = "Failed to join game. Please try again.";
+    }
+}
 document.addEventListener("DOMContentLoaded", () => {
     // Handle Registration Form
     const registerForm = document.getElementById("register-form");
@@ -68,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (logoutButton) {
         logoutButton.addEventListener("click", logout);
     }
-    
+
     // Fetch user data when on the dashboard
     async function fetchUserData() {
         try {
@@ -146,18 +170,4 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("game-link").textContent = `Game Code: ${data.gameCode}`;
         });
     }
-    //Join game
-    async function joinGame() {
-        const gameCode = document.getElementById("gameCodeInput").value;
-        if (!gameCode) return;
-    
-        const res = await fetch(`/join-game/${gameCode}`);
-        const data = await res.json();
-    
-        if (res.ok) {
-            window.location.href = `/play-game.html?gameCode=${gameCode}`;
-        } else {
-            document.getElementById("joinMessage").textContent = data.message;
-        }
-    }    
 });
